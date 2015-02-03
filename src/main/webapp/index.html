@@ -1,0 +1,161 @@
+<html>
+<head>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+    <script src="http://code.jquery.com/jquery-1.11.2.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+    <script>
+
+        function motorControl(direction, on) {
+            $.ajax({
+                url: "http://" + window.location.host + "/PirrAri/control/" + direction + "/" + on
+            });
+        }
+
+        function metrics() {
+            $.ajax({
+                url: "http://" + window.location.host + "/PirrAri/control/metrics"
+            }).done(
+                    function (metrics) {
+                        $("#distance").text(metrics.distance)
+                        $("#motorSpeed").text(metrics.motorSpeed);
+                        $("#signalStrength").text(metrics.signalStrength);
+                    }
+            );
+        }
+
+        function motorSpeed(speed) {
+            $.ajax({
+                type: "POST",
+                url: "http://" + window.location.host + "/PirrAri/control/speed/" + speed
+            });
+        }
+
+        $(function () {
+            $(this).keydown(function (event) {
+                switch (event.keyCode) {
+                    case 38:
+                        motorControl("forward", true);
+                        $("#forward").css("background-color", "red");
+                        break
+                    case 40:
+                        motorControl("backward", true);
+                        $("#backward").css("background-color", "red");
+                        break;
+                    case 37:
+                        motorControl("left", true);
+                        $("#left").css("background-color", "red");
+                        break;
+                    case 39:
+                        motorControl("right", true);
+                        $("#right").css("background-color", "red");
+                        break;
+                }
+            });
+
+
+            $(this).keyup(function (event) {
+                switch (event.keyCode) {
+                    case 38:
+                        motorControl("forward", false);
+                        $("#forward").css("background-color", "white");
+                        break
+                    case 40:
+                        motorControl("backward", false);
+                        $("#backward").css("background-color", "white");
+                        break;
+                    case 37:
+                        motorControl("left", false);
+                        $("#left").css("background-color", "white");
+                        break;
+                    case 39:
+                        motorControl("right", false);
+                        $("#right").css("background-color", "white");
+                        break;
+                }
+            });
+
+            $("#speed").slider({
+                range: "min",
+                value: 60,
+                min: 20,
+                max: 100,
+                slide: function (event, ui) {
+                    motorSpeed($("#speed").slider("value"));
+                }
+            });
+            $("#speed .ui-slider-handle").unbind('keydown');
+
+            setInterval(metrics, 1000);
+
+        });
+
+
+    </script>
+</head>
+<body>
+<p>
+
+<div align="center">
+    <table>
+        <tr>
+            <td/>
+            <td>
+                <div id="forward" align="center">Forward</div>
+
+            </td>
+            <td/>
+        </tr>
+        <tr>
+            <td>
+                <div id="left" align="center">Left</div>
+            </td>
+            <td/>
+            <td>
+                <div id="right" align="center">Right</div>
+            </td>
+        </tr>
+        <tr>
+            <td/>
+            <td>
+                <div id="backward" align="center">Backward</div>
+            </td>
+            <td/>
+        </tr>
+    </table>
+</div>
+</p>
+
+<p>
+
+<div id="metrics" align="center">
+    <table>
+        <tr>
+            <td>Distance:</td>
+            <td>
+                <div id="distance" align="center"/>
+
+            </td>
+        </tr>
+        <tr>
+            <td>Motor Speed:</td>
+            <td>
+                <div id="motorSpeed" align="center"/>
+            </td>
+        </tr>
+        <tr>
+            <td>Signal Strength:</td>
+            <td>
+                <div id="signalStrength" align="center"/>
+            </td>
+        </tr>
+    </table>
+</div>
+</p>
+
+<p align="center">
+Motor speed:
+<div id="speed" style="width: 50%; margin: auto"/>
+</p>
+
+</body>
+</html>

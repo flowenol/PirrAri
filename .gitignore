@@ -1,0 +1,8 @@
+/*/.settings/
+/*/*.iml
+/*/.idea/
+/*/.cache
+/*/.checkstyle
+/.idea/*
+/*/target
+/target
