@@ -8,6 +8,8 @@ public class Metrics {
     private String signalStrength;
     private String motorSpeed;
     private String distance;
+    private String peripheralsPower;
+    private String motorsReady;
 
     public String getSignalStrength() {
         return signalStrength;
@@ -31,5 +33,21 @@ public class Metrics {
 
     public void setDistance(String distance) {
         this.distance = distance;
+    }
+
+    public String getPeripheralsPower() {
+        return peripheralsPower;
+    }
+
+    public void setPeripheralsPower(String peripheralsPower) {
+        this.peripheralsPower = peripheralsPower;
+    }
+
+    public String getMotorsReady() {
+        return motorsReady;
+    }
+
+    public void setMotorsReady(String motorsReady) {
+        this.motorsReady = motorsReady;
     }
 }

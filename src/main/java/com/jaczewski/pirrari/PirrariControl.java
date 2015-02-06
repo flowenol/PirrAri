@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
@@ -27,6 +28,11 @@ public class PirrariControl {
     private GpioPinDigitalOutput forward;
     private GpioPinDigitalOutput backward;
 
+    private GpioPinDigitalOutput peripheralsPower;
+    private boolean peripheralsPowerValue = true;
+
+    private GpioPinDigitalInput motorsReady;
+
     private SpiDevice metricsSensor;
     private SpiDevice motorSpeed;
 
@@ -39,6 +45,8 @@ public class PirrariControl {
         right = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_22, "right", PinState.LOW);
         forward = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_23, "forward", PinState.LOW);
         backward = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_24, "backward", PinState.LOW);
+        peripheralsPower = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_07, "peripheralsPower", PinState.HIGH);
+        motorsReady = gpioController.provisionDigitalInputPin(RaspiPin.GPIO_04, "motorsReady");
     }
 
     public void close() {
@@ -61,13 +69,32 @@ public class PirrariControl {
         this.backward.setState(on);
     }
 
+    public void peripheralsPower(boolean on) {
+        this.peripheralsPower.setState(on);
+        this.peripheralsPowerValue = on;
+    }
+
+    public boolean getPeripheralsPower() {
+        return this.peripheralsPowerValue;
+    }
+
+    public boolean getMotorsReady() {
+        return this.motorsReady.isLow();
+    }
+
     public synchronized int getDistance() throws IOException, InterruptedException {
+        if (!peripheralsPowerValue) {
+            return 0;
+        }
         synchronized (metricsSensor) {
             return metricsSensor.write(DUMMY_BYTE)[0];
         }
     }
 
     public void setMotorSpeed(int speed) throws IOException, InterruptedException {
+        if (!peripheralsPowerValue) {
+            return;
+        }
         synchronized (motorSpeed) {
             motorSpeed.write(SET_MOTOR_SPEED);
             Thread.sleep(10);
@@ -76,6 +103,9 @@ public class PirrariControl {
     }
 
     public synchronized int getMotorSpeed() throws IOException, InterruptedException {
+        if (!peripheralsPowerValue) {
+            return 0;
+        }
         synchronized (motorSpeed) {
             motorSpeed.write(GET_MOTOR_SPEED);
             Thread.sleep(10);

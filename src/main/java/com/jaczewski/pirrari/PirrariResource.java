@@ -50,6 +50,14 @@ public class PirrariResource {
     }
 
     @GET
+    @Path("/peripheralsPower/{on}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String peripheralsPower(@PathParam("on") Boolean on) {
+        PirrariControl.CONTROL.peripheralsPower(on);
+        return on.toString();
+    }
+
+    @GET
     @Path("/metrics")
     @Produces(MediaType.APPLICATION_JSON)
     public Metrics getMetrics() {
@@ -57,6 +65,8 @@ public class PirrariResource {
 
         try {
 
+            metrics.setMotorsReady(String.valueOf(PirrariControl.CONTROL.getMotorsReady()));
+            metrics.setPeripheralsPower(String.valueOf(PirrariControl.CONTROL.getPeripheralsPower()));
             metrics.setDistance(String.valueOf(PirrariControl.CONTROL.getDistance()));
             metrics.setMotorSpeed(String.valueOf(PirrariControl.CONTROL.getMotorSpeed()));
 

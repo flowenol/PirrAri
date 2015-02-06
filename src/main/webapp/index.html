@@ -19,6 +19,8 @@
                         $("#distance").text(metrics.distance)
                         $("#motorSpeed").text(metrics.motorSpeed);
                         $("#signalStrength").text(metrics.signalStrength);
+                        $("#peripheralsPower").text(metrics.peripheralsPower);
+                        $("#motorsReady").text(metrics.motorsReady);
                     }
             );
         }
@@ -140,6 +142,18 @@
             <td>Motor Speed:</td>
             <td>
                 <div id="motorSpeed" align="center"/>
+            </td>
+        </tr>
+        <tr>
+            <td>Motors Operational:</td>
+            <td>
+                <div id="motorsReady" align="center"/>
+            </td>
+        </tr>
+        <tr>
+            <td>Peripherals Power:</td>
+            <td>
+                <div id="peripheralsPower" align="center"/>
             </td>
         </tr>
         <tr>

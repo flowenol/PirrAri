@@ -1,10 +1,23 @@
 #include <SPI.h>
 
 #define TIMEOUT -1 
+#define CURRENT_COUNT_MAX 5
+#define CURRENT_ZERO_READ_VALUE 514
 
 int triggerPin = 9;
 int echoPin = 8;
+int overallCurrentPin = A1;
+int motorCurrentPin = A2;
+
 int distance = 0;
+
+int overallCurrent = 0;
+int overallCurrentSum = 0;
+int overallCurrentCount = 0;
+
+int motorCurrent = 0;
+int motorCurrentSum = 0;
+int motorCurrentCount = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -27,13 +40,40 @@ void setup() {
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-  Serial.println("SPI");
   SPDR = byte(distance); 
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
 
 void loop() {
-  delay(500);
+  delay(100);
+  
+  distanceMeasure();
+ 
+  overallCurrentMeasure();
+  motorCurrentMeasure();
+}
+
+void overallCurrentMeasure() {
+  if (overallCurrentCount == CURRENT_COUNT_MAX) {
+    overallCurrent = CURRENT_ZERO_READ_VALUE - (overallCurrentSum / CURRENT_COUNT_MAX);
+    overallCurrentSum = 0;
+    overallCurrentCount = 0; 
+  }
+  overallCurrentSum += analogRead(overallCurrentPin);
+  overallCurrentCount++;
+}
+
+void motorCurrentMeasure() {
+  if (motorCurrentCount == CURRENT_COUNT_MAX) {
+    motorCurrent = CURRENT_ZERO_READ_VALUE - (motorCurrentSum / CURRENT_COUNT_MAX);
+    motorCurrentSum = 0;
+    motorCurrentCount = 0; 
+  }
+  motorCurrentSum += analogRead(motorCurrentPin);
+  motorCurrentCount++;
+}
+
+void distanceMeasure() {
   trigger();
   
   long echoDuration = echo();
@@ -44,10 +84,7 @@ void loop() {
   
   float distanceCm = (float((echoDuration / 2)) / 1000000) * 340.29 * 100;
   distance = int(distanceCm);
-  Serial.print("Distance: ");
-  Serial.println(distance);
 }
-
 
 void trigger() {
   digitalWrite(triggerPin, HIGH);
