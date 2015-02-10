@@ -50,6 +50,16 @@
             });
         }
 
+        function cameraOn() {
+           var cameraSource = "http://" + window.location.hostname + ":9000/stream";
+           $("#camera").html("<iframe id='cameraSource' width='320' height='240'/>");
+           $("#cameraSource").attr("src", cameraSource);
+        }
+
+        function cameraOff() {
+            $("#camera").empty();
+        }
+
         $(function () {
             $(this).keydown(function (event) {
                 switch (event.keyCode) {
@@ -110,10 +120,16 @@
             $("#speed .ui-slider-handle").unbind('keydown');
 
 
-            $("input[name=power]").switchButton({
+            $("input[name=powerSwitch]").switchButton({
                 checked: true,
                 on_callback: powerOn,
                 off_callback: powerOff
+            });
+
+            $("input[name=cameraSwitch]").switchButton({
+                checked: false,
+                on_callback: cameraOn,
+                off_callback: cameraOff
             });
 
             setInterval(metrics, 1000);
@@ -211,9 +227,19 @@
     <div align="center">Power:
 
         <div style="display: inline-block;  position: relative;  top: 3px;">
-            <input type="checkbox" name="power" value="1" checked>
+            <input type="checkbox" name="powerSwitch" value="1" checked>
         </div>
     </div>
+</p>
+
+<p align="center">
+    <div align="center">Camera:
+
+        <div style="display: inline-block;  position: relative;  top: 3px;">
+            <input type="checkbox" name="cameraSwitch" value="1" checked>
+        </div>
+    </div>
+    <div id="camera" align="center"></div>
 </p>
 
 <br/>
