@@ -14,12 +14,15 @@ import com.pi4j.io.spi.SpiFactory;
 
 public class PirrariControl {
 
-    private static final byte DUMMY_BYTE = 0x03;
+    private static final byte DUMMY_BYTE = 0x0F;
     private static final byte SET_MOTOR_SPEED = 0x01;
     private static final byte GET_MOTOR_SPEED = 0x02;
 
-    public static final PirrariControl CONTROL = new PirrariControl();
+    private static final byte GET_DISTANCE = 0x01;
+    private static final byte GET_CURRENT = 0x02;
+    private static final byte GET_MOTOR_CURRENT = 0x03;
 
+    public static final PirrariControl CONTROL = new PirrariControl();
 
     private GpioController gpioController;
 
@@ -70,8 +73,10 @@ public class PirrariControl {
     }
 
     public void peripheralsPower(boolean on) {
-        this.peripheralsPower.setState(on);
-        this.peripheralsPowerValue = on;
+        synchronized (peripheralsPower) {
+            this.peripheralsPower.setState(on);
+            this.peripheralsPowerValue = on;
+        }
     }
 
     public boolean getPeripheralsPower() {
@@ -83,19 +88,60 @@ public class PirrariControl {
     }
 
     public synchronized int getDistance() throws IOException, InterruptedException {
-        if (!peripheralsPowerValue) {
-            return 0;
+        synchronized (peripheralsPower) {
+
+            if (!peripheralsPowerValue) {
+                return 0;
+            }
+
+            metricsSensor.write(GET_DISTANCE);
+            Thread.sleep(10);
+            metricsSensor.write(DUMMY_BYTE);
+            Thread.sleep(10);
+
+            return metricsSensor.write(DUMMY_BYTE)[0];
         }
-        synchronized (metricsSensor) {
+    }
+
+    public synchronized int getOverallCurrent() throws IOException, InterruptedException {
+        synchronized (peripheralsPower) {
+
+            if (!peripheralsPowerValue) {
+                return 0;
+            }
+
+            metricsSensor.write(GET_CURRENT);
+            Thread.sleep(10);
+            metricsSensor.write(DUMMY_BYTE);
+            Thread.sleep(10);
+
+            return metricsSensor.write(DUMMY_BYTE)[0];
+        }
+    }
+
+    public synchronized int getMotorCurrent() throws IOException, InterruptedException {
+        synchronized (peripheralsPower) {
+
+            if (!peripheralsPowerValue) {
+                return 0;
+            }
+
+            metricsSensor.write(GET_MOTOR_CURRENT);
+            Thread.sleep(10);
+            metricsSensor.write(DUMMY_BYTE);
+            Thread.sleep(10);
+
             return metricsSensor.write(DUMMY_BYTE)[0];
         }
     }
 
     public void setMotorSpeed(int speed) throws IOException, InterruptedException {
-        if (!peripheralsPowerValue) {
-            return;
-        }
-        synchronized (motorSpeed) {
+        synchronized (peripheralsPower) {
+
+            if (!peripheralsPowerValue) {
+                return;
+            }
+
             motorSpeed.write(SET_MOTOR_SPEED);
             Thread.sleep(10);
             motorSpeed.write((byte) speed);
@@ -103,10 +149,12 @@ public class PirrariControl {
     }
 
     public synchronized int getMotorSpeed() throws IOException, InterruptedException {
-        if (!peripheralsPowerValue) {
-            return 0;
-        }
-        synchronized (motorSpeed) {
+        synchronized (peripheralsPower) {
+
+            if (!peripheralsPowerValue) {
+                return 0;
+            }
+
             motorSpeed.write(GET_MOTOR_SPEED);
             Thread.sleep(10);
             motorSpeed.write(DUMMY_BYTE);

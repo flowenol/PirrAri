@@ -69,6 +69,8 @@ public class PirrariResource {
             metrics.setPeripheralsPower(String.valueOf(PirrariControl.CONTROL.getPeripheralsPower()));
             metrics.setDistance(String.valueOf(PirrariControl.CONTROL.getDistance()));
             metrics.setMotorSpeed(String.valueOf(PirrariControl.CONTROL.getMotorSpeed()));
+            metrics.setOverallCurrent(String.format("%.3f", PirrariControl.CONTROL.getOverallCurrent() * 27.03 / 1023));
+            metrics.setMotorCurrent(String.format("%.3f", PirrariControl.CONTROL.getMotorCurrent() * 27.03 / 1023));
 
             Process process = new ProcessBuilder("/bin/bash", "-c",
                     "iwconfig wlan0 | perl -l -ne '/Quality=[0-9]{2}\\/100+/ && print $&' | cut -d= -f2").start();

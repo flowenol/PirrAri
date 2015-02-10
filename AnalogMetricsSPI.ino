@@ -1,8 +1,9 @@
 #include <SPI.h>
 
 #define TIMEOUT -1 
-#define CURRENT_COUNT_MAX 5
-#define CURRENT_ZERO_READ_VALUE 514
+#define CURRENT_COUNT_MAX 10
+#define CURRENT_ZERO_READ_VALUE 515
+#define MOTOR_CURRENT_ZERO_READ_VALUE 513
 
 int triggerPin = 9;
 int echoPin = 8;
@@ -18,6 +19,8 @@ int overallCurrentCount = 0;
 int motorCurrent = 0;
 int motorCurrentSum = 0;
 int motorCurrentCount = 0;
+
+byte command = 0x00;
 
 void setup() {
   Serial.begin(9600);
@@ -40,7 +43,43 @@ void setup() {
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-  SPDR = byte(distance); 
+  Serial.println("SPI Interrupt");
+  byte c = SPDR;
+  
+  Serial.print("Current command: ");
+  Serial.println(command);
+  
+  switch (command) {
+    case 0x00:
+      if (c == 0x01 || c == 0x02 || c == 0x03) {
+        command = c;  
+        Serial.print("SPI set command: ");
+        Serial.println(command);
+      } else {
+        Serial.print("SPI Unknown command: ");
+        Serial.println(c);
+      }
+      break;
+    case 0x01:
+      Serial.print("SPI sending distance ");
+      Serial.println(distance); 
+      SPDR = byte(distance);
+      command = 0x00;
+      break;
+    case 0x02:
+      Serial.print("SPI sending overall current ");
+      Serial.println(overallCurrent);
+      SPDR = byte(overallCurrent);
+      command = 0x00;
+      break;
+    case 0x03:
+      Serial.println("SPI sending motor current ");
+      Serial.println(motorCurrent);
+      SPDR = byte(motorCurrent);
+      command = 0x00;
+      break;
+  }
+  Serial.println("------------------"); 
 }  // end of interrupt service routine (ISR) SPI_STC_vect
 
 
@@ -57,7 +96,7 @@ void overallCurrentMeasure() {
   if (overallCurrentCount == CURRENT_COUNT_MAX) {
     overallCurrent = CURRENT_ZERO_READ_VALUE - (overallCurrentSum / CURRENT_COUNT_MAX);
     overallCurrentSum = 0;
-    overallCurrentCount = 0; 
+    overallCurrentCount = 0;
   }
   overallCurrentSum += analogRead(overallCurrentPin);
   overallCurrentCount++;
@@ -65,7 +104,12 @@ void overallCurrentMeasure() {
 
 void motorCurrentMeasure() {
   if (motorCurrentCount == CURRENT_COUNT_MAX) {
-    motorCurrent = CURRENT_ZERO_READ_VALUE - (motorCurrentSum / CURRENT_COUNT_MAX);
+    motorCurrent = MOTOR_CURRENT_ZERO_READ_VALUE - (motorCurrentSum / CURRENT_COUNT_MAX);
+    
+    // noise reduction
+    if (motorCurrent < 0)
+      motorCurrent = 0;
+      
     motorCurrentSum = 0;
     motorCurrentCount = 0; 
   }
@@ -78,7 +122,6 @@ void distanceMeasure() {
   
   long echoDuration = echo();
   if (echoDuration == TIMEOUT) {
-    Serial.println("Timeout!!!");
     return;
   }
   
