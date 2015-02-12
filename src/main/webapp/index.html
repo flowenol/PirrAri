@@ -7,10 +7,27 @@
     <script src="jquery.switchButton.js"></script>
     <script>
 
+        function getUrlParameter(sParam)
+        {
+            var pageUrl = window.location.search.substring(1);
+            var urlVariables = pageUrl.split('&');
+            for (var i = 0; i < urlVariables.length; i++)
+            {
+                var parameterName = urlVariables[i].split('=');
+                if (parameterName[0] == sParam)
+                {
+                    return parameterName[1];
+                }
+            }
+
+            return null;
+        }
+
         function motorControl(direction, on) {
             $.ajax({
                 url: "http://" + window.location.host + "/PirrAri/control/" + direction + "/" + on
             });
+            $("#" + direction).css("background-color", on ? "red" : "white");
         }
 
         function metrics() {
@@ -18,7 +35,7 @@
                 url: "http://" + window.location.host + "/PirrAri/control/metrics"
             }).done(
                     function (metrics) {
-                        $("#distance").text(metrics.distance)
+                        $("#distance").text(metrics.distance);
                         $("#motorSpeed").text(metrics.motorSpeed);
                         $("#overallCurrent").text(metrics.overallCurrent + " A");
                         $("#motorCurrent").text(metrics.motorCurrent + " A");
@@ -51,8 +68,9 @@
         }
 
         function cameraOn() {
-           var cameraSource = "http://" + window.location.hostname + ":9000/stream";
-           $("#camera").html("<iframe id='cameraSource' width='320' height='240'/>");
+           var cameraPort = getUrlParameter("cameraPort") != null ? getUrlParameter("cameraPort") : 9000;
+           var cameraSource = "http://" + window.location.hostname + ":" + cameraPort + "/stream";
+           $("#camera").html("<iframe id='cameraSource' width='320' height='240' style='overflow: hidden'/>");
            $("#cameraSource").attr("src", cameraSource);
         }
 
@@ -61,23 +79,33 @@
         }
 
         $(function () {
+            // mouse control
+            $("#forward").on("mousedown touchstart", function() { motorControl("forward", true); });
+            $("#forward").on("mouseup touchend", function() { motorControl("forward", false); });
+
+            $("#backward").on("mousedown touchstart", function() { motorControl("backward", true); });
+            $("#backward").on("mouseup touchend", function() { motorControl("backward", false); });
+
+            $("#left").on("mousedown touchstart", function() { motorControl("left", true); });
+            $("#left").on("mouseup touchend", function() { motorControl("left", false); });
+
+            $("#right").on("mousedown touchstart", function() { motorControl("right", true); });
+            $("#right").on("mouseup touchend", function() { motorControl("right", false); });
+
+            // keyboard control
             $(this).keydown(function (event) {
                 switch (event.keyCode) {
                     case 38:
                         motorControl("forward", true);
-                        $("#forward").css("background-color", "red");
                         break
                     case 40:
                         motorControl("backward", true);
-                        $("#backward").css("background-color", "red");
                         break;
                     case 37:
                         motorControl("left", true);
-                        $("#left").css("background-color", "red");
                         break;
                     case 39:
                         motorControl("right", true);
-                        $("#right").css("background-color", "red");
                         break;
                 }
             });
@@ -88,24 +116,33 @@
                     case 38:
                         motorControl("forward", false);
                         motorControl("forward", false);
-                        $("#forward").css("background-color", "white");
                         break
                     case 40:
                         motorControl("backward", false);
                         motorControl("backward", false);
-                        $("#backward").css("background-color", "white");
                         break;
                     case 37:
                         motorControl("left", false);
                         motorControl("left", false);
-                        $("#left").css("background-color", "white");
                         break;
                     case 39:
                         motorControl("right", false);
                         motorControl("right", false);
-                        $("#right").css("background-color", "white");
                         break;
                 }
+            });
+
+            // parameter control
+            $("input[name=powerSwitch]").switchButton({
+                checked: true,
+                on_callback: powerOn,
+                off_callback: powerOff
+            });
+
+            $("input[name=cameraSwitch]").switchButton({
+                checked: false,
+                on_callback: cameraOn,
+                off_callback: cameraOff
             });
 
             $("#speed").slider({
@@ -119,19 +156,7 @@
             });
             $("#speed .ui-slider-handle").unbind('keydown');
 
-
-            $("input[name=powerSwitch]").switchButton({
-                checked: true,
-                on_callback: powerOn,
-                off_callback: powerOff
-            });
-
-            $("input[name=cameraSwitch]").switchButton({
-                checked: false,
-                on_callback: cameraOn,
-                off_callback: cameraOff
-            });
-
+            // metrics interval
             setInterval(metrics, 1000);
 
         });
