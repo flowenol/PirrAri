@@ -2,16 +2,29 @@
 #include <SoftwareSerial.h>
 #define SSID        "dude"
 #define PASS        "voodoo123"
-#define DST_IP      "220.181.111.85"    //baidu.com
 
 SoftwareSerial dbgSerial(10, 11); // RX, TX
 
 String command = "";
 boolean commandFinished = false;
 
+int relayPin = 9;
+boolean relayStatus = false;
+
+int devicePin = 7;
+int operational = LOW;
+boolean operationalState = false;
+int operationalCheckCounter = 0;
+
+int softwareUpdatePin = 6;
+
 void setup()
 {
   // Open serial communications and wait for port to open:
+  pinMode(relayPin, OUTPUT);
+  pinMode(devicePin, INPUT);
+  pinMode(softwareUpdatePin, INPUT);
+  digitalWrite(relayPin, HIGH);
   Serial.begin(9600);
   Serial.setTimeout(6000);
   dbgSerial.begin(9600);  //can't be faster than 19200 for softserial
@@ -64,9 +77,13 @@ void setup()
   
   Serial.setTimeout(100);
 }
+
 void loop()
 {
-   while (Serial.available()) {
+  
+  checkIfIsOperationalAndShutdown();
+  
+  while (Serial.available()) {
     char character = Serial.read();
     
     if (character == '\n' || character == '\r') {
@@ -80,28 +97,110 @@ void loop()
    if (commandFinished) {
      command.trim();
      
-     if (command != "" && command == "Link") {
+     if (command == "Link") {
        dbgSerial.println("Someone has connected.");
-       Serial.println("AT+CIPSEND=0,23");
-       Serial.println("What is your command?");
+       Serial.println("AT+CIPSEND=0,2");
+       Serial.print("> ");
      }
-     if (command != "" && command.substring(0, 4) == "+IPD") {
+     
+     if (command.substring(0, 4) == "+IPD") {
        dbgSerial.println("Received command: " + command);
-       
-       if (command == "+IPD,0,8:status") {
-         dbgSerial.println("Status command received");
-         Serial.println("AT+CIPSEND=0,5");
-         Serial.println("off");
+        
+       if (command == "+IPD,0,4:on") {
+         dbgSerial.println("On command received");
+         relayStatus = true;
+         digitalWrite(relayPin, LOW);
        }
        
-       delay(100);
+       if (command == "+IPD,0,5:off") {
+         dbgSerial.println("Off command received");
+         relayStatus = false;
+         digitalWrite(relayPin, HIGH);
+       }
        
-       Serial.println("AT+CIPSEND=0,23");
-       Serial.println("What is your command?");
-     }
+        if (command == "+IPD,0,8:status") {
+         dbgSerial.println("Status command received");
+         
+         String statusMsg;
+         if (relayStatus) {
+           statusMsg = "Relay is On.";
+         } else {
+           statusMsg = "Relay is Off.";
+         }
+         
+         Serial.print("AT+CIPSEND=0,");
+         Serial.println(statusMsg.length() + 2);
+         Serial.println(statusMsg);
+       }
+       
+       if (command == "+IPD,0,8:device") {
+         dbgSerial.println("Device command received");
+         operational = digitalRead(devicePin);
+         
+         String deviceMsg;
+         if (operational == HIGH) {
+           deviceMsg = "Device is On.";
+         } else {
+           deviceMsg = "Device is Off.";
+         }
+         
+         Serial.print("AT+CIPSEND=0,");
+         Serial.println(deviceMsg.length() + 2);
+         Serial.println(deviceMsg);
+       } 
+     
+       delay(200);
+       
+       Serial.println("AT+CIPSEND=0,2");
+       Serial.print("> ");
+       
+     } 
+     
      command = "";
      commandFinished = false;
    }
+}
+
+void checkIfIsOperationalAndShutdown() {
+  operationalCheckCounter++;
+  if (operationalCheckCounter == 1000) {
+     operational = digitalRead(devicePin);
+    
+     if (operational == HIGH) {
+       if (operationalState == false) {
+         delay(1000);
+         operational = digitalRead(devicePin);
+         if (operational == HIGH) {
+           dbgSerial.println("Device is on now");
+           operationalState = true;
+         }          
+       }
+     } else if (operational == LOW) {
+        if (operationalState == true) {
+           delay(1000);
+           
+           operational = digitalRead(devicePin);
+           if (operational == LOW) {
+             
+             dbgSerial.println("Device is off now");
+             operationalState = false;
+
+             if (digitalRead(softwareUpdatePin) == LOW) {             
+               dbgSerial.println("Shutting down device in 10 sec");
+               delay(10000);
+               dbgSerial.println("Device shutdown");
+               
+               digitalWrite(relayPin, HIGH);
+               relayStatus = false;
+             } else {
+               dbgSerial.println("Device is off due to software update");  
+             }
+           }
+        } 
+     }
+     
+     operationalCheckCounter = 0;
+  } 
 }
 
 boolean initialize() {

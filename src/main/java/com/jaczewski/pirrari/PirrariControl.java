@@ -26,6 +26,9 @@ public class PirrariControl {
 
     private GpioController gpioController;
 
+
+    private GpioPinDigitalOutput operational;
+
     private GpioPinDigitalOutput left;
     private GpioPinDigitalOutput right;
     private GpioPinDigitalOutput forward;
@@ -44,6 +47,9 @@ public class PirrariControl {
         metricsSensor = SpiFactory.getInstance(SpiChannel.CS0, 100000);
         motorSpeed = SpiFactory.getInstance(SpiChannel.CS1, 100000);
 
+        // wake on WiFi marker
+        operational = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_05, "operational", PinState.HIGH);
+
         left = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_21, "left", PinState.LOW);
         right = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_22, "right", PinState.LOW);
         forward = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_23, "forward", PinState.LOW);
@@ -53,6 +59,7 @@ public class PirrariControl {
     }
 
     public void close() {
+        operational.low();
         gpioController.shutdown();
     }
 

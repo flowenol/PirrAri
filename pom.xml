@@ -70,11 +70,13 @@
                         <sshexec host="${pi.address}" trust="yes"
                                  username="pi" password="raspberry"
                                  command="
+                                 sudo echo 1 > /sys/class/gpio/gpio12/value;
                                  sudo service tomcat7 stop;
                                  sudo rm -f /var/log/tomcat7/*;
                                  sudo rm -rf /var/lib/tomcat7/webapps/*;
                                  sudo mv PirrAri.war /var/lib/tomcat7/webapps/;
-                                 sudo service tomcat7 start"/>
+                                 sudo service tomcat7 start;
+                                 sudo echo 0 > /sys/class/gpio/gpio12/value;"/>
                     </tasks>
                 </configuration>
                 <dependencies>
