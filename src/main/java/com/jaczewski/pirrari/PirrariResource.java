@@ -99,4 +99,14 @@ public class PirrariResource {
         }
     }
 
+
+    @GET
+    @Path("/shutdown")
+    public void shutdown() {
+        try {
+            new ProcessBuilder("/bin/bash", "-c", "halt").start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

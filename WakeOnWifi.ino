@@ -115,6 +115,7 @@ void loop()
        if (command == "+IPD,0,5:off") {
          dbgSerial.println("Off command received");
          relayStatus = false;
+         operationalState = false;
          digitalWrite(relayPin, HIGH);
        }
        

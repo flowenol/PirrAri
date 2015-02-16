@@ -67,10 +67,17 @@
             });
         }
 
+        function shutdown() {
+            $.ajax({
+                type: "GET",
+                url: "http://" + window.location.host + "/PirrAri/control/shutdown"
+            });
+        }
+
         function cameraOn() {
            var cameraPort = getUrlParameter("cameraPort") != null ? getUrlParameter("cameraPort") : 9000;
-           var cameraSource = "http://" + window.location.hostname + ":" + cameraPort + "/stream";
-           $("#camera").html("<iframe id='cameraSource' width='320' height='240' style='overflow: hidden'/>");
+           var cameraSource = "http://" + window.location.hostname + ":" + cameraPort + "/stream/video.mjpeg";
+           $("#camera").html("<img id='cameraSource'/>");
            $("#cameraSource").attr("src", cameraSource);
         }
 
@@ -94,6 +101,9 @@
 
             // keyboard control
             $(this).keydown(function (event) {
+
+                event.preventDefault();
+
                 switch (event.keyCode) {
                     case 38:
                         motorControl("forward", true);
@@ -112,6 +122,9 @@
 
 
             $(this).keyup(function (event) {
+
+                event.preventDefault();
+
                 switch (event.keyCode) {
                     case 38:
                         motorControl("forward", false);
@@ -156,6 +169,35 @@
             });
             $("#speed .ui-slider-handle").unbind('keydown');
 
+            $("input[name=shutdown]")
+                    .button()
+                    .click(function(event) {
+
+                        $('<div id="shutdown-dialog" title="Shutdown"><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;">' +
+                                '</span>Do you want to shutdown the device?</div></div>').appendTo("body");
+
+                        event.preventDefault();
+
+                        $("#shutdown-dialog").dialog({
+                            resizable: false,
+                            modal: true,
+                            buttons: {
+                                "Shutdown": function() {
+                                    shutdown();
+
+                                    $(this).dialog("close");
+                                },
+                                Cancel: function() {
+                                    $(this).dialog("close");
+                                }
+                            },
+                            close: function(event, ui) {
+                                $("#shutdown-dialog").remove();
+                            }
+                        });
+                    }
+            );
+
             // metrics interval
             setInterval(metrics, 1000);
 
@@ -198,7 +240,6 @@
 </p>
 
 <p>
-
 <div id="metrics" align="center">
     <table>
         <tr>
@@ -264,6 +305,7 @@
             <input type="checkbox" name="cameraSwitch" value="1" checked>
         </div>
     </div>
+    <br/>
     <div id="camera" align="center"></div>
 </p>
 
@@ -273,6 +315,14 @@
 <p align="center">
     <div align="center">Motor speed:</div>
     <div id="speed" style="width: 50%; margin: auto"/>
+
+</p>
+
+<br/>
+<br/>
+
+<p align="center">
+    <input type="submit" name="shutdown" value="Shutdown">
 </p>
 
 </body>
