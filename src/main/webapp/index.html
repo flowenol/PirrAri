@@ -82,6 +82,8 @@
         }
 
         function cameraOff() {
+            $("#cameraSource").attr("src", null);
+            $("#cameraSource").remove();
             $("#camera").empty();
         }
 
