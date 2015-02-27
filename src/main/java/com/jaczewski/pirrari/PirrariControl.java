@@ -35,7 +35,7 @@ public class PirrariControl {
     private GpioPinDigitalOutput backward;
 
     private GpioPinDigitalOutput peripheralsPower;
-    private boolean peripheralsPowerValue = true;
+    private boolean peripheralsPowerValue = false;
 
     private GpioPinDigitalInput motorsReady;
 
@@ -81,7 +81,7 @@ public class PirrariControl {
 
     public void peripheralsPower(boolean on) {
         synchronized (peripheralsPower) {
-            this.peripheralsPower.setState(on);
+            this.peripheralsPower.setState(!on);
             this.peripheralsPowerValue = on;
         }
     }
@@ -91,7 +91,7 @@ public class PirrariControl {
     }
 
     public boolean getMotorsReady() {
-        return this.motorsReady.isLow();
+        return this.motorsReady.isLow() && peripheralsPowerValue;
     }
 
     public synchronized int getDistance() throws IOException, InterruptedException {

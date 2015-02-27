@@ -3,7 +3,8 @@
 #define SSID        "dude"
 #define PASS        "voodoo123"
 
-SoftwareSerial dbgSerial(10, 11); // RX, TX
+SoftwareSerial wifiSerial(10, 16);
+SoftwareSerial debug(14, 15); // RX, TX
 
 String command = "";
 boolean commandFinished = false;
@@ -18,20 +19,27 @@ int operationalCheckCounter = 0;
 
 int softwareUpdatePin = 6;
 
+int chpdPin = 8;
+
 void setup()
 {
-  // Open serial communications and wait for port to open:
+  // Open wifiSerial communications and wait for port to open:
   pinMode(relayPin, OUTPUT);
   pinMode(devicePin, INPUT);
   pinMode(softwareUpdatePin, INPUT);
+  pinMode(chpdPin, OUTPUT);
+  
   digitalWrite(relayPin, HIGH);
-  Serial.begin(9600);
-  Serial.setTimeout(6000);
-  dbgSerial.begin(9600);  //can't be faster than 19200 for softserial
+  digitalWrite(chpdPin, HIGH);
+  
+  debug.begin(9600);  //can't be faster than 19200
+  wifiSerial.begin(9600);
+  wifiSerial.setTimeout(6000);
+  wifiSerial.listen();
   
   // test if the module is ready
   boolean initialized = false;
-  for (int i = 0; i < 5 ; i++) {
+  for (int i = 0; i < 100 ; i++) {
     if (initialize()) {
       initialized = true;
       break;
@@ -75,7 +83,7 @@ void setup()
     die();
   }
   
-  Serial.setTimeout(100);
+  wifiSerial.setTimeout(100);
 }
 
 void loop()
@@ -83,8 +91,8 @@ void loop()
   
   checkIfIsOperationalAndShutdown();
   
-  while (Serial.available()) {
-    char character = Serial.read();
+  while (wifiSerial.available()) {
+    char character = wifiSerial.read();
     
     if (character == '\n' || character == '\r') {
       commandFinished = true; 
@@ -98,29 +106,29 @@ void loop()
      command.trim();
      
      if (command == "Link") {
-       dbgSerial.println("Someone has connected.");
-       Serial.println("AT+CIPSEND=0,2");
-       Serial.print("> ");
+       debug.println("Someone has connected.");
+       wifiSerial.println("AT+CIPSEND=0,2");
+       wifiSerial.print("> ");
      }
      
      if (command.substring(0, 4) == "+IPD") {
-       dbgSerial.println("Received command: " + command);
+       debug.println("Received command: " + command);
         
        if (command == "+IPD,0,4:on") {
-         dbgSerial.println("On command received");
+         debug.println("On command received");
          relayStatus = true;
          digitalWrite(relayPin, LOW);
        }
        
        if (command == "+IPD,0,5:off") {
-         dbgSerial.println("Off command received");
+         debug.println("Off command received");
          relayStatus = false;
          operationalState = false;
          digitalWrite(relayPin, HIGH);
        }
        
         if (command == "+IPD,0,8:status") {
-         dbgSerial.println("Status command received");
+         debug.println("Status command received");
          
          String statusMsg;
          if (relayStatus) {
@@ -129,13 +137,13 @@ void loop()
            statusMsg = "Relay is Off.";
          }
          
-         Serial.print("AT+CIPSEND=0,");
-         Serial.println(statusMsg.length() + 2);
-         Serial.println(statusMsg);
+         wifiSerial.print("AT+CIPSEND=0,");
+         wifiSerial.println(statusMsg.length() + 2);
+         wifiSerial.println(statusMsg);
        }
        
        if (command == "+IPD,0,8:device") {
-         dbgSerial.println("Device command received");
+         debug.println("Device command received");
          operational = digitalRead(devicePin);
          
          String deviceMsg;
@@ -145,15 +153,15 @@ void loop()
            deviceMsg = "Device is Off.";
          }
          
-         Serial.print("AT+CIPSEND=0,");
-         Serial.println(deviceMsg.length() + 2);
-         Serial.println(deviceMsg);
+         wifiSerial.print("AT+CIPSEND=0,");
+         wifiSerial.println(deviceMsg.length() + 2);
+         wifiSerial.println(deviceMsg);
        } 
      
        delay(200);
        
-       Serial.println("AT+CIPSEND=0,2");
-       Serial.print("> ");
+       wifiSerial.println("AT+CIPSEND=0,2");
+       wifiSerial.print("> ");
        
      } 
      
@@ -172,7 +180,7 @@ void checkIfIsOperationalAndShutdown() {
          delay(1000);
          operational = digitalRead(devicePin);
          if (operational == HIGH) {
-           dbgSerial.println("Device is on now");
+           debug.println("Device is on now");
            operationalState = true;
          }          
        }
@@ -183,18 +191,18 @@ void checkIfIsOperationalAndShutdown() {
            operational = digitalRead(devicePin);
            if (operational == LOW) {
              
-             dbgSerial.println("Device is off now");
+             debug.println("Device is off now");
              operationalState = false;
 
              if (digitalRead(softwareUpdatePin) == LOW) {             
-               dbgSerial.println("Shutting down device in 10 sec");
+               debug.println("Shutting down device in 10 sec");
                delay(10000);
-               dbgSerial.println("Device shutdown");
+               debug.println("Device shutdown");
                
                digitalWrite(relayPin, HIGH);
                relayStatus = false;
              } else {
-               dbgSerial.println("Device is off due to software update");  
+               debug.println("Device is off due to software update");  
              }
            }
         } 
@@ -205,64 +213,64 @@ void checkIfIsOperationalAndShutdown() {
 }
 
 boolean initialize() {
-  Serial.println("AT+RST");
-  if (Serial.find("ready")) {
-    dbgSerial.println("OK, module is ready.");
+  wifiSerial.println("AT+RST");
+  if (wifiSerial.find("ready")) {
+    debug.println("OK, module is ready.");
     return true;
   }
-  dbgSerial.println("ERROR, no response from module.");
+  debug.println("ERROR, no response from module.");
   return false;
 }
 
 boolean connect()
 {
-  Serial.println("AT+CWMODE=1");
+  wifiSerial.println("AT+CWMODE=1");
   String cmd = "AT+CWJAP=\"";
   cmd += SSID;
   cmd += "\",\"";
   cmd += PASS;
   cmd += "\"";
-  Serial.println(cmd);
+  wifiSerial.println(cmd);
 
-  if (Serial.find("OK")) { 
-      dbgSerial.println("OK, connected to WiFi.");
+  if (wifiSerial.find("OK")) { 
+      debug.println("OK, connected to WiFi.");
       return true;
   }
-  dbgSerial.println("Error, not connected to WiFi.");
+  debug.println("Error, not connected to WiFi.");
   return false;
 }
 
 void printIp() {
-  Serial.println("AT+CIFSR");
-  dbgSerial.print("Ip Address: ");
+  wifiSerial.println("AT+CIFSR");
+  debug.print("Ip Address: ");
   char ip[50];
-  Serial.readBytesUntil('O', ip, 50);
+  wifiSerial.readBytesUntil('O', ip, 50);
   String ipString = String(ip);
   ipString.remove(0, 10);
   ipString.trim();
-  dbgSerial.println(ipString.substring(0, 15)); 
+  debug.println(ipString.substring(0, 15)); 
 }
 
 boolean openPort() {
  // set multiple connection mode
-  Serial.println("AT+CIPMUX=1");
-  if (!Serial.find("OK")) {
-    dbgSerial.println("ERROR, couldn't set multiple connection mode.");
+  wifiSerial.println("AT+CIPMUX=1");
+  if (!wifiSerial.find("OK")) {
+    debug.println("ERROR, couldn't set multiple connection mode.");
     return false;
   }
   // set server socket
-  Serial.println("AT+CIPSERVER=1,9999");
-  if (!Serial.find("OK")) {
-    dbgSerial.println("ERROR, couldn't open server socket."); 
+  wifiSerial.println("AT+CIPSERVER=1,9999");
+  if (!wifiSerial.find("OK")) {
+    debug.println("ERROR, couldn't open server socket."); 
     
     return false;
   }
-  dbgSerial.println("OK, opened port 9999."); 
+  debug.println("OK, opened port 9999."); 
  
   return true;
 }
 
 void die() {
-  dbgSerial.println("Dying...");
+  debug.println("Dying...");
   while(1) delay(1000);
 }
