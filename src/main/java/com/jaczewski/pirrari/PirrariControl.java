@@ -19,8 +19,10 @@ public class PirrariControl {
     private static final byte GET_MOTOR_SPEED = 0x02;
 
     private static final byte GET_DISTANCE = 0x01;
-    private static final byte GET_CURRENT = 0x02;
-    private static final byte GET_MOTOR_CURRENT = 0x03;
+    private static final byte GET_CURRENT_LOWER_HALF = 0x02;
+    private static final byte GET_CURRENT_UPPER_HALF = 0x03;
+    private static final byte GET_MOTOR_CURRENT_LOWER_HALF = 0x04;
+    private static final byte GET_MOTOR_CURRENT_UPPER_HALF = 0x05;
 
     public static final PirrariControl CONTROL = new PirrariControl();
 
@@ -117,12 +119,20 @@ public class PirrariControl {
                 return 0;
             }
 
-            metricsSensor.write(GET_CURRENT);
+            metricsSensor.write(GET_CURRENT_LOWER_HALF);
             Thread.sleep(10);
             metricsSensor.write(DUMMY_BYTE);
             Thread.sleep(10);
 
-            return metricsSensor.write(DUMMY_BYTE)[0];
+            int current = Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]);
+            Thread.sleep(10);
+
+            metricsSensor.write(GET_CURRENT_UPPER_HALF);
+            Thread.sleep(10);
+            metricsSensor.write(DUMMY_BYTE);
+            Thread.sleep(10);
+
+            return (Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]) << 8) | current;
         }
     }
 
@@ -133,12 +143,21 @@ public class PirrariControl {
                 return 0;
             }
 
-            metricsSensor.write(GET_MOTOR_CURRENT);
+            metricsSensor.write(GET_MOTOR_CURRENT_LOWER_HALF);
             Thread.sleep(10);
             metricsSensor.write(DUMMY_BYTE);
             Thread.sleep(10);
 
-            return metricsSensor.write(DUMMY_BYTE)[0];
+            int motorCurrent = Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]);
+            Thread.sleep(10);
+
+            metricsSensor.write(GET_MOTOR_CURRENT_UPPER_HALF);
+            Thread.sleep(10);
+            metricsSensor.write(DUMMY_BYTE);
+            Thread.sleep(10);
+
+            return (Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]) << 8) | motorCurrent;
+
         }
     }
 

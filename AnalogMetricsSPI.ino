@@ -1,9 +1,10 @@
 #include <SPI.h>
 
 #define TIMEOUT -1 
-#define CURRENT_COUNT_MAX 10
-#define CURRENT_ZERO_READ_VALUE 515
-#define MOTOR_CURRENT_ZERO_READ_VALUE 513
+#define CURRENT_COUNT_MAX 200
+#define MOTOR_CURRENT_COUNT_MAX 200
+#define CURRENT_ZERO_READ_VALUE 489
+#define MOTOR_CURRENT_ZERO_READ_VALUE 489
 
 int triggerPin = 9;
 int echoPin = 8;
@@ -12,12 +13,12 @@ int motorCurrentPin = A2;
 
 int distance = 0;
 
-int overallCurrent = 0;
-int overallCurrentSum = 0;
+unsigned int overallCurrent = 0;
+long overallCurrentSum = 0;
 int overallCurrentCount = 0;
 
-int motorCurrent = 0;
-int motorCurrentSum = 0;
+unsigned int motorCurrent = 0;
+long motorCurrentSum = 0;
 int motorCurrentCount = 0;
 
 byte command = 0x00;
@@ -51,7 +52,7 @@ ISR (SPI_STC_vect)
   
   switch (command) {
     case 0x00:
-      if (c == 0x01 || c == 0x02 || c == 0x03) {
+      if (c == 0x01 || c == 0x02 || c == 0x03 || c == 0x04 || c == 0x05) {
         command = c;  
         Serial.print("SPI set command: ");
         Serial.println(command);
@@ -67,15 +68,23 @@ ISR (SPI_STC_vect)
       command = 0x00;
       break;
     case 0x02:
-      Serial.print("SPI sending overall current ");
-      Serial.println(overallCurrent);
+      Serial.println("SPI sending overall current lower half");
       SPDR = byte(overallCurrent);
       command = 0x00;
       break;
     case 0x03:
-      Serial.println("SPI sending motor current ");
-      Serial.println(motorCurrent);
+      Serial.println("SPI sending overall current upper half");
+      SPDR = byte(overallCurrent >> 8);
+      command = 0x00;
+      break;
+    case 0x04:
+      Serial.println("SPI sending motor current lower half");
       SPDR = byte(motorCurrent);
+      command = 0x00;
+      break;
+    case 0x05:
+      Serial.println("SPI sending motor current upper half");
+      SPDR = byte(motorCurrent >> 8);
       command = 0x00;
       break;
   }
@@ -84,7 +93,7 @@ ISR (SPI_STC_vect)
 
 
 void loop() {
-  delay(100);
+  delay(10);
   
   distanceMeasure();
  
@@ -94,7 +103,7 @@ void loop() {
 
 void overallCurrentMeasure() {
   if (overallCurrentCount == CURRENT_COUNT_MAX) {
-    overallCurrent = CURRENT_ZERO_READ_VALUE - (overallCurrentSum / CURRENT_COUNT_MAX);
+    overallCurrent = abs(CURRENT_ZERO_READ_VALUE - (overallCurrentSum / CURRENT_COUNT_MAX));
     overallCurrentSum = 0;
     overallCurrentCount = 0;
   }
@@ -104,7 +113,7 @@ void overallCurrentMeasure() {
 
 void motorCurrentMeasure() {
   if (motorCurrentCount == CURRENT_COUNT_MAX) {
-    motorCurrent = MOTOR_CURRENT_ZERO_READ_VALUE - (motorCurrentSum / CURRENT_COUNT_MAX);
+    motorCurrent = abs(MOTOR_CURRENT_ZERO_READ_VALUE - (motorCurrentSum / MOTOR_CURRENT_COUNT_MAX));
     
     // noise reduction
     if (motorCurrent < 0)
