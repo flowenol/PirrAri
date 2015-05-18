@@ -69,7 +69,7 @@
 
         function shutdown() {
             $.ajax({
-                type: "GET",
+                type: "POST",
                 url: "http://" + window.location.host + "/PirrAri/control/shutdown"
             });
         }
@@ -82,24 +82,23 @@
         }
 
         function cameraOff() {
-            $("#cameraSource").attr("src", null);
-            $("#cameraSource").remove();
+            $("#cameraSource").attr("src", null).remove();
             $("#camera").empty();
         }
 
         $(function () {
             // mouse control
-            $("#forward").on("mousedown touchstart", function() { motorControl("forward", true); });
-            $("#forward").on("mouseup touchend", function() { motorControl("forward", false); });
+            $("#forward").on("mousedown touchstart", function() { motorControl("forward", true); })
+                .on("mouseup touchend", function() { motorControl("forward", false); });
 
-            $("#backward").on("mousedown touchstart", function() { motorControl("backward", true); });
-            $("#backward").on("mouseup touchend", function() { motorControl("backward", false); });
+            $("#backward").on("mousedown touchstart", function() { motorControl("backward", true); })
+                .on("mouseup touchend", function() { motorControl("backward", false); });
 
-            $("#left").on("mousedown touchstart", function() { motorControl("left", true); });
-            $("#left").on("mouseup touchend", function() { motorControl("left", false); });
+            $("#left").on("mousedown touchstart", function() { motorControl("left", true); })
+                .on("mouseup touchend", function() { motorControl("left", false); });
 
-            $("#right").on("mousedown touchstart", function() { motorControl("right", true); });
-            $("#right").on("mouseup touchend", function() { motorControl("right", false); });
+            $("#right").on("mousedown touchstart", function() { motorControl("right", true); })
+                .on("mouseup touchend", function() { motorControl("right", false); });
 
             // keyboard control
             $(this).keydown(function (event) {
@@ -109,7 +108,7 @@
                 switch (event.keyCode) {
                     case 38:
                         motorControl("forward", true);
-                        break
+                        break;
                     case 40:
                         motorControl("backward", true);
                         break;
@@ -131,7 +130,7 @@
                     case 38:
                         motorControl("forward", false);
                         motorControl("forward", false);
-                        break
+                        break;
                     case 40:
                         motorControl("backward", false);
                         motorControl("backward", false);
@@ -186,8 +185,28 @@
                             buttons: {
                                 "Shutdown": function() {
                                     shutdown();
+                                    $("#directions").remove();
+                                    $("#metrics").remove();
+                                    $("#power-switch").remove();
+                                    $("#camera-switch").remove();
+                                    $("#camera").remove();
+                                    $("#speed-slider").remove();
+                                    $("#shutdown-button").remove();
 
                                     $(this).dialog("close");
+
+
+                                    $('<div id="shutdown" title="Shutdown"><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;">' +
+                                    '</span>The device was shut down</div></div>').appendTo("body");
+
+                                    $("#shutdown").dialog({
+                                        resizable: false,
+                                        modal: true,
+                                        open: function(event, ui) {
+                                            //hide close button.
+                                            $(this).parent().children().children('.ui-dialog-titlebar-close').hide();
+                                        }
+                                    });
                                 },
                                 Cancel: function() {
                                     $(this).dialog("close");
@@ -211,7 +230,7 @@
 <body>
 <p>
 
-<div align="center">
+<div id="directions" align="center">
     <table>
         <tr>
             <td/>
@@ -292,7 +311,7 @@
 </p>
 
 <p align="center">
-    <div align="center">Power:
+    <div id="power-switch" align="center">Power:
 
         <div style="display: inline-block;  position: relative;  top: 3px;">
             <input type="checkbox" name="powerSwitch" value="1" checked>
@@ -301,7 +320,7 @@
 </p>
 
 <p align="center">
-    <div align="center">Camera:
+    <div id="camera-switch"  align="center">Camera:
 
         <div style="display: inline-block;  position: relative;  top: 3px;">
             <input type="checkbox" name="cameraSwitch" value="1" checked>
@@ -315,16 +334,19 @@
 <br/>
 
 <p align="center">
-    <div align="center">Motor speed:</div>
-    <div id="speed" style="width: 50%; margin: auto"/>
-
+    <div id="speed-slider">
+        <div align="center">Motor speed:</div>
+        <div id="speed" style="width: 50%; margin: auto"/>
+    </div>
 </p>
 
 <br/>
 <br/>
 
 <p align="center">
-    <input type="submit" name="shutdown" value="Shutdown">
+    <div id="shutdown-button" align="center">
+        <input type="submit" name="shutdown" value="Shutdown">
+    </div>
 </p>
 
 </body>

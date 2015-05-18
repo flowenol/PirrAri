@@ -46,8 +46,8 @@ public class PirrariControl {
 
     public void init() throws IOException {
         gpioController = GpioFactory.getInstance();
-        metricsSensor = SpiFactory.getInstance(SpiChannel.CS0, 100000);
-        motorSpeed = SpiFactory.getInstance(SpiChannel.CS1, 100000);
+        metricsSensor = SpiFactory.getInstance(SpiChannel.CS0, 1000000);
+        motorSpeed = SpiFactory.getInstance(SpiChannel.CS1, 1000000);
 
         // wake on WiFi marker
         operational = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_05, "operational", PinState.HIGH);
@@ -103,12 +103,7 @@ public class PirrariControl {
                 return 0;
             }
 
-            metricsSensor.write(GET_DISTANCE);
-            Thread.sleep(10);
-            metricsSensor.write(DUMMY_BYTE);
-            Thread.sleep(10);
-
-            return metricsSensor.write(DUMMY_BYTE)[0];
+            return receiveUnsignedValue(metricsSensor, GET_DISTANCE, 80);
         }
     }
 
@@ -119,20 +114,9 @@ public class PirrariControl {
                 return 0;
             }
 
-            metricsSensor.write(GET_CURRENT_LOWER_HALF);
+            int current = receiveUnsignedValue(metricsSensor, GET_CURRENT_LOWER_HALF, 10);
             Thread.sleep(10);
-            metricsSensor.write(DUMMY_BYTE);
-            Thread.sleep(10);
-
-            int current = Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]);
-            Thread.sleep(10);
-
-            metricsSensor.write(GET_CURRENT_UPPER_HALF);
-            Thread.sleep(10);
-            metricsSensor.write(DUMMY_BYTE);
-            Thread.sleep(10);
-
-            return (Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]) << 8) | current;
+            return (receiveUnsignedValue(metricsSensor, GET_CURRENT_UPPER_HALF, 100) << 8) | current;
         }
     }
 
@@ -143,20 +127,9 @@ public class PirrariControl {
                 return 0;
             }
 
-            metricsSensor.write(GET_MOTOR_CURRENT_LOWER_HALF);
-            Thread.sleep(10);
-            metricsSensor.write(DUMMY_BYTE);
-            Thread.sleep(10);
+            int motorCurrent = receiveUnsignedValue(metricsSensor, GET_MOTOR_CURRENT_LOWER_HALF, 100);
 
-            int motorCurrent = Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]);
-            Thread.sleep(10);
-
-            metricsSensor.write(GET_MOTOR_CURRENT_UPPER_HALF);
-            Thread.sleep(10);
-            metricsSensor.write(DUMMY_BYTE);
-            Thread.sleep(10);
-
-            return (Byte.toUnsignedInt(metricsSensor.write(DUMMY_BYTE)[0]) << 8) | motorCurrent;
+            return (receiveUnsignedValue(metricsSensor, GET_MOTOR_CURRENT_UPPER_HALF, 100) << 8) | motorCurrent;
 
         }
     }
@@ -168,9 +141,7 @@ public class PirrariControl {
                 return;
             }
 
-            motorSpeed.write(SET_MOTOR_SPEED);
-            Thread.sleep(10);
-            motorSpeed.write((byte) speed);
+           sendValue(motorSpeed, SET_MOTOR_SPEED, (byte) speed, 10);
         }
     }
 
@@ -181,12 +152,23 @@ public class PirrariControl {
                 return 0;
             }
 
-            motorSpeed.write(GET_MOTOR_SPEED);
-            Thread.sleep(10);
-            motorSpeed.write(DUMMY_BYTE);
-            Thread.sleep(10);
-
-            return motorSpeed.write(DUMMY_BYTE)[0];
+            return receiveUnsignedValue(motorSpeed, GET_MOTOR_SPEED, 10);
         }
+    }
+
+    private void sendValue(SpiDevice device, byte command, byte value, int timeout) throws IOException, InterruptedException {
+        Thread.sleep(timeout);
+        device.write(command);
+        Thread.sleep(timeout);
+        device.write(value);
+    }
+
+    private int receiveUnsignedValue(SpiDevice device, byte command, int timeout) throws IOException, InterruptedException {
+        Thread.sleep(timeout);
+        device.write(command);
+        Thread.sleep(timeout);
+        device.write(DUMMY_BYTE);
+        Thread.sleep(timeout);
+        return Byte.toUnsignedInt(device.write(DUMMY_BYTE)[0]);
     }
 }

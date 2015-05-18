@@ -17,7 +17,8 @@ import com.jaczewski.pirrari.data.Metrics;
 @Consumes(MediaType.TEXT_PLAIN)
 public class PirrariResource {
 
-    private static final float CURRENT_UNIT = 2.77f; //mA
+    private static final float CURRENT_UNIT = 2.0f; //mA
+    private static final float MOTOR_CURRENT_UNIT = 2.0f; //mA
 
     @GET
     @Path("/left/{on}")
@@ -72,7 +73,7 @@ public class PirrariResource {
             metrics.setDistance(String.valueOf(PirrariControl.CONTROL.getDistance()));
             metrics.setMotorSpeed(String.valueOf(PirrariControl.CONTROL.getMotorSpeed()));
             metrics.setOverallCurrent(String.format("%.1f", PirrariControl.CONTROL.getOverallCurrent() * CURRENT_UNIT));
-            metrics.setMotorCurrent(String.format("%.1f", PirrariControl.CONTROL.getMotorCurrent() * CURRENT_UNIT));
+            metrics.setMotorCurrent(String.format("%.1f", PirrariControl.CONTROL.getMotorCurrent() * MOTOR_CURRENT_UNIT));
 
             Process process = new ProcessBuilder("/bin/bash", "-c",
                     "iwconfig wlan0 | perl -l -ne '/Quality=[0-9]{2}\\/100+/ && print $&' | cut -d= -f2").start();
@@ -102,7 +103,7 @@ public class PirrariResource {
     }
 
 
-    @GET
+    @POST
     @Path("/shutdown")
     public void shutdown() {
         try {
