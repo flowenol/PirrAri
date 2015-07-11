@@ -76,7 +76,7 @@ public class PirrariResource {
             metrics.setMotorCurrent(String.format("%.1f", PirrariControl.CONTROL.getMotorCurrent() * MOTOR_CURRENT_UNIT));
 
             Process process = new ProcessBuilder("/bin/bash", "-c",
-                    "iwconfig wlan0 | perl -l -ne '/Quality=[0-9]{2}\\/100+/ && print $&' | cut -d= -f2").start();
+                    "iwconfig wlan0 | perl -l -ne '/Signal level=[0-9]{2}\\/100+/ && print $&' | cut -d= -f2").start();
 
             try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream());
                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {

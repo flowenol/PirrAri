@@ -46,8 +46,8 @@ public class PirrariControl {
 
     public void init() throws IOException {
         gpioController = GpioFactory.getInstance();
-        metricsSensor = SpiFactory.getInstance(SpiChannel.CS0, 1000000);
-        motorSpeed = SpiFactory.getInstance(SpiChannel.CS1, 1000000);
+        metricsSensor = SpiFactory.getInstance(SpiChannel.CS0, 100000);
+        motorSpeed = SpiFactory.getInstance(SpiChannel.CS1, 100000);
 
         // wake on WiFi marker
         operational = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_05, "operational", PinState.HIGH);
