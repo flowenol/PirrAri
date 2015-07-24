@@ -3,50 +3,60 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.jaczewski</groupId>
     <artifactId>PirrAri</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <version>0.1</version>
     <name>PirrAri</name>
 
     <repositories>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>http://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>oss-snapshots-repo</id>
             <name>Sonatype OSS Maven Repository</name>
             <url>https://oss.sonatype.org/content/groups/public</url>
             <snapshots>
                 <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
     </repositories>
 
     <properties>
         <pi.address>192.168.2.200</pi.address>
-        <jersey.version>1.18.3</jersey.version>
+        <spring-boot.version>1.2.5.RELEASE</spring-boot.version>
         <wagon.ssh.version>1.0-beta-6</wagon.ssh.version>
         <ant.jsch.version>1.6.5</ant.jsch.version>
         <jsch.version>0.1.42</jsch.version>
         <commons.net.version>1.4.1</commons.net.version>
         <ant.commons.net.version>1.6.5</ant.commons.net.version>
         <pi4j.version>1.0-SNAPSHOT</pi4j.version>
-        <servlet.api.version>2.5</servlet.api.version>
     </properties>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.2.5.RELEASE</version>
+    </parent>
     <dependencies>
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-bundle</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jersey</artifactId>
+            <version>${spring-boot.version}</version>
         </dependency>
         <dependency>
             <groupId>com.pi4j</groupId>
             <artifactId>pi4j-core</artifactId>
             <version>${pi4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>${servlet.api.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -59,6 +69,10 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>

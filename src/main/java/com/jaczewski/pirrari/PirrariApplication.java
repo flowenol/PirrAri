@@ -1,18 +1,18 @@
 package com.jaczewski.pirrari;
 
+import org.glassfish.jersey.server.ResourceConfig;
+import org.springframework.context.annotation.Configuration;
+
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
 
-@ApplicationPath("/control")
-public class PirrariApplication extends Application {
+@Configuration
+@ApplicationPath("/PirrAri/control")
+public class PirrariApplication extends ResourceConfig {
 
-    @Override
-    public Set<Class<?>> getClasses() {
-        final Set<Class<?>> classes = new HashSet<Class<?>>();
-        classes.add(PirrariResource.class);
-        return classes;
+    public PirrariApplication() {
+        register(PirrariResource.class);
     }
-
 }

@@ -11,7 +11,13 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
 import com.pi4j.io.spi.SpiFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
+@Component
+@Scope("singleton")
 public class PirrariControl {
 
     private static final byte DUMMY_BYTE = 0x0F;
@@ -44,8 +50,9 @@ public class PirrariControl {
     private SpiDevice metricsSensor;
     private SpiDevice motorSpeed;
 
+    @PostConstruct
     public void init() throws IOException {
-        gpioController = GpioFactory.getInstance();
+        /*gpioController = GpioFactory.getInstance();
         metricsSensor = SpiFactory.getInstance(SpiChannel.CS0, 100000);
         motorSpeed = SpiFactory.getInstance(SpiChannel.CS1, 100000);
 
@@ -58,6 +65,7 @@ public class PirrariControl {
         backward = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_24, "backward", PinState.LOW);
         peripheralsPower = gpioController.provisionDigitalOutputPin(RaspiPin.GPIO_07, "peripheralsPower", PinState.HIGH);
         motorsReady = gpioController.provisionDigitalInputPin(RaspiPin.GPIO_04, "motorsReady");
+        */
     }
 
     public void close() {

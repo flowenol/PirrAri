@@ -12,13 +12,19 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.jaczewski.pirrari.data.Metrics;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 @Path("/")
 @Consumes(MediaType.TEXT_PLAIN)
 public class PirrariResource {
 
     private static final float CURRENT_UNIT = 2.0f; //mA
     private static final float MOTOR_CURRENT_UNIT = 2.0f; //mA
+
+    @Autowired
+    private PirrariControl control;
 
     @GET
     @Path("/left/{on}")
