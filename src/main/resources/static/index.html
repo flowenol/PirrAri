@@ -25,14 +25,16 @@
 
         function motorControl(direction, on) {
             $.ajax({
-                url: "http://" + window.location.host + "/PirrAri/control/" + direction + "/" + on
+                url: "http://" + window.location.host + "/PirrAri/control/" + direction + "/" + on,
+                timeout: 300
             });
             $("#" + direction).css("background-color", on ? "red" : "white");
         }
 
         function metrics() {
             $.ajax({
-                url: "http://" + window.location.host + "/PirrAri/control/metrics"
+                url: "http://" + window.location.host + "/PirrAri/control/metrics",
+                timeout: 300
             }).done(
                     function (metrics) {
                         $("#distance").text(metrics.distance);
