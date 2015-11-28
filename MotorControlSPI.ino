@@ -2,15 +2,15 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 
-#define DIRECTION_MOTOR_SPEED 60
+#define DIRECTION_MOTOR_SPEED 80
 
 PololuQik2s9v1 pololuQik(3, 2, 4);
 
-int leftPin = 5;
-int rightPin = 6;
+const int leftPin = 5;
+const int rightPin = 6;
 
-int forwardPin = 8;
-int backwardPin = 9;
+const int forwardPin = 8;
+const int backwardPin = 9;
 
 int left = LOW;
 int right = LOW;

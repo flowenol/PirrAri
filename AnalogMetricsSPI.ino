@@ -6,10 +6,10 @@
 #define CURRENT_ZERO_READ_VALUE 700
 #define MOTOR_CURRENT_ZERO_READ_VALUE 675
 
-int triggerPin = 9;
-int echoPin = 8;
-int overallCurrentPin = A1;
-int motorCurrentPin = A2;
+const int triggerPin = 9;
+const int echoPin = 8;
+const int overallCurrentPin = A1;
+const int motorCurrentPin = A2;
 
 int distance = 0;
 

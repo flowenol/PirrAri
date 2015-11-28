@@ -2,24 +2,24 @@
 #include <SoftwareSerial.h>
 #define SSID        "dude"
 #define PASS        "voodoo123"
+#define SHUTDOWN_TIMEOUT 20000
 
 SoftwareSerial wifiSerial(10, 16);
 SoftwareSerial debug(14, 15); // RX, TX
 
+const int relayPin = 9;
+const int devicePin = 7;
+const int softwareUpdatePin = 6;
+const int chpdPin = 8;
+
 String command = "";
 boolean commandFinished = false;
 
-int relayPin = 9;
 boolean relayStatus = false;
 
-int devicePin = 7;
 int operational = LOW;
 boolean operationalState = false;
 int operationalCheckCounter = 0;
-
-int softwareUpdatePin = 6;
-
-int chpdPin = 8;
 
 void setup()
 {
@@ -195,8 +195,8 @@ void checkIfIsOperationalAndShutdown() {
              operationalState = false;
 
              if (digitalRead(softwareUpdatePin) == LOW) {             
-               debug.println("Shutting down device in 10 sec");
-               delay(10000);
+               debug.println("Shutting down device...");
+               delay(SHUTDOWN_TIMEOUT);
                debug.println("Device shutdown");
                
                digitalWrite(relayPin, HIGH);
